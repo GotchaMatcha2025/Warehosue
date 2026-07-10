@@ -1,0 +1,243 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<title>Gotcha Matcha — Warehouse Stock</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link href="https://fonts.googleapis.com/css2?family=Nunito:wght@600;700;800;900&display=swap" rel="stylesheet">
+<style>
+  :root{
+    --forest:#2e4233; --forest-deep:#22332a; --clay:#c4704b;
+    --linen:#efe9dd; --linen-soft:#f7f3ea; --card:#ffffff;
+    --ink:#22332a; --muted:#7a8378; --mint:#dde8da; --red:#a3402c; --amber:#9a6a00; --radius:14px;
+  }
+  *{box-sizing:border-box;margin:0;padding:0;-webkit-tap-highlight-color:transparent;}
+  body{font-family:'Nunito',sans-serif;background:var(--linen);color:var(--ink);
+       padding-bottom:calc(94px + env(safe-area-inset-bottom));}
+  header{background:var(--forest);color:var(--linen-soft);padding:16px 18px;
+         padding-top:calc(16px + env(safe-area-inset-top));position:sticky;top:0;z-index:20;}
+  header .hwrap{max-width:600px;margin:0 auto;}
+  header h1{font-weight:900;font-size:1.12rem;}
+  header p{font-size:.76rem;opacity:.8;font-weight:700;margin-top:2px;}
+
+  main{max-width:600px;margin:0 auto;padding:0 0 16px;}
+  .bar{position:sticky;top:0;z-index:10;background:var(--linen);padding:12px 16px;border-bottom:1px solid #e3ddcf;}
+  .toggle{display:grid;grid-template-columns:1fr 1fr;gap:8px;margin-bottom:10px;}
+  .toggle button{padding:13px;border:2px solid #e3ddcf;background:#fff;border-radius:12px;
+    font-family:inherit;font-weight:800;font-size:.95rem;color:var(--muted);}
+  .toggle button.active{border-color:var(--forest);background:var(--forest);color:#fff;}
+  .ctx{display:flex;gap:10px;align-items:center;flex-wrap:wrap;}
+  .ctx label{font-size:.8rem;font-weight:800;color:var(--muted);}
+  .ctx input,.ctx select{padding:10px 11px;border:2px solid #e3ddcf;border-radius:10px;
+    font-family:inherit;font-weight:700;font-size:16px;background:#fff;color:var(--ink);}
+
+  .lowbanner{margin:12px 16px 0;padding:11px 13px;border-radius:12px;background:#fdf0e8;border:2px solid #eab99e;
+    color:#8a4a2f;font-size:.82rem;font-weight:800;display:none;line-height:1.45;}
+
+  .cat{padding:20px 16px 6px;font-weight:900;font-size:.78rem;letter-spacing:1.4px;text-transform:uppercase;color:var(--forest);}
+  .card{margin:0 12px;background:var(--card);border-radius:var(--radius);box-shadow:0 1px 3px rgba(34,51,42,.08);overflow:hidden;}
+  .item{display:flex;align-items:center;gap:10px;padding:12px 13px;border-top:1px solid #f0ece2;}
+  .item:first-child{border-top:none;}
+  .item.filled{background:var(--mint);}
+  .item .info{flex:1;min-width:0;}
+  .item .name{font-weight:800;font-size:.98rem;}
+  .item .bal{font-size:.72rem;color:var(--muted);font-weight:700;margin-top:2px;}
+  .badge{display:inline-block;font-size:.6rem;font-weight:900;padding:1px 7px;border-radius:99px;margin-left:6px;vertical-align:middle;}
+  .badge.LOW{background:#fdeeee;color:var(--red);} .badge.OUT{background:var(--red);color:#fff;}
+  .item input.qty{width:74px;height:46px;padding:6px;border:2px solid #e3ddcf;border-radius:11px;
+    font-family:inherit;font-weight:800;font-size:18px;text-align:center;background:var(--linen-soft);}
+  .item input.qty.on{border-color:var(--forest);background:#fff;}
+  .item select.unit{width:96px;height:46px;border:2px solid #e3ddcf;border-radius:11px;
+    font-family:inherit;font-weight:700;font-size:15px;background:#fff;color:var(--ink);}
+
+  .actionbar{position:fixed;left:0;right:0;bottom:0;z-index:30;background:var(--forest-deep);color:var(--linen-soft);
+    padding:12px 16px calc(14px + env(safe-area-inset-bottom));box-shadow:0 -4px 16px rgba(34,51,42,.25);}
+  .actionbar .inner{max-width:600px;margin:0 auto;display:flex;align-items:center;justify-content:space-between;gap:12px;}
+  .actionbar .count{font-size:.85rem;font-weight:800;opacity:.9;}
+  .actionbar button{background:var(--clay);color:#fff;border:none;border-radius:12px;padding:14px 26px;
+    font-family:inherit;font-weight:900;font-size:1rem;letter-spacing:.4px;}
+  .actionbar button:disabled{opacity:.45;}
+  .actionbar button:active{transform:scale(.97);}
+
+  .modal{position:fixed;inset:0;background:rgba(34,51,42,.45);display:none;align-items:flex-end;z-index:40;}
+  .modal.open{display:flex;}
+  .sheet{background:#fff;width:100%;max-width:600px;margin:0 auto;max-height:82vh;border-radius:18px 18px 0 0;
+    padding:18px 16px calc(20px + env(safe-area-inset-bottom));overflow:auto;}
+  .sheet h2{font-weight:900;font-size:1.15rem;margin-bottom:4px;}
+  .sheet .small{font-size:.8rem;color:var(--muted);font-weight:700;margin-bottom:12px;}
+  .sum{display:flex;justify-content:space-between;padding:10px 0;border-top:1px solid #f0ece2;font-size:.95rem;font-weight:700;}
+  .sum:first-of-type{border-top:none;}
+  .sheet .actions{display:flex;gap:10px;margin-top:16px;}
+  .sheet .actions button{flex:1;padding:15px;border-radius:12px;font-family:inherit;font-weight:900;font-size:1rem;border:none;}
+  .btn-cancel{background:#eee;color:#555;} .btn-go{background:var(--forest);color:#fff;}
+
+  #toast{position:fixed;top:74px;left:50%;transform:translateX(-50%) translateY(-16px);background:var(--forest);color:#fff;
+    font-weight:800;font-size:.9rem;padding:12px 22px;border-radius:99px;opacity:0;pointer-events:none;transition:all .25s;
+    z-index:50;box-shadow:0 4px 14px rgba(0,0,0,.2);max-width:88vw;text-align:center;}
+  #toast.show{opacity:1;transform:translateX(-50%) translateY(0);} #toast.err{background:var(--red);}
+  .loading{padding:40px 16px;text-align:center;color:var(--muted);font-weight:700;}
+</style>
+</head>
+<body>
+<header><div class="hwrap">
+  <h1>🍵 Warehouse Stock</h1>
+  <p id="updated">Loading…</p>
+</div></header>
+
+<main>
+  <div class="bar">
+    <div class="toggle">
+      <button id="mode-in" class="active" onclick="setMode('in')">📥 Receiving</button>
+      <button id="mode-out" onclick="setMode('out')">📤 Sending out</button>
+    </div>
+    <div class="ctx">
+      <label>Date</label><input type="date" id="date">
+      <span id="loc-wrap"><label>Into</label>
+        <select id="location"><option>Home Storage</option></select></span>
+      <span id="dest-wrap" style="display:none"><label>To</label>
+        <select id="destination"></select></span>
+    </div>
+  </div>
+
+  <div class="lowbanner" id="lowbanner"></div>
+  <div id="content"><div class="loading">Loading items…</div></div>
+</main>
+
+<div class="actionbar"><div class="inner">
+  <div class="count" id="count">Nothing entered yet</div>
+  <button id="reviewBtn" onclick="review()" disabled>Review</button>
+</div></div>
+
+<div class="modal" id="modal"><div class="sheet">
+  <h2 id="modal-title">Confirm</h2>
+  <div class="small" id="modal-sub"></div>
+  <div id="modal-list"></div>
+  <div class="actions">
+    <button class="btn-cancel" onclick="closeModal()">Back</button>
+    <button class="btn-go" id="confirmBtn" onclick="submitBatch()">Confirm &amp; log</button>
+  </div>
+</div></div>
+
+<div id="toast"></div>
+
+<script>
+  // ====== PASTE YOUR DEPLOYED WEB APP URL HERE (ends in /exec) ======
+  var WEBAPP_URL = 'PASTE_WEB_APP_URL_HERE';
+  var STATE = null, mode = 'in';
+
+  function load(){
+    fetch(WEBAPP_URL).then(function(r){return r.json();}).then(function(s){
+      if(!s.ok) throw new Error(s.error||'load failed');
+      STATE = s;
+      document.getElementById('updated').textContent = 'Balances as of ' + s.generatedAt;
+      var dsel = document.getElementById('destination'); dsel.innerHTML = '';
+      s.destinations.forEach(function(d){ var o=document.createElement('option'); o.textContent=d; o.value=d; dsel.appendChild(o); });
+      dsel.value = s.defaultDestination;
+      var t=new Date();
+      document.getElementById('date').value = t.getFullYear()+'-'+('0'+(t.getMonth()+1)).slice(-2)+'-'+('0'+t.getDate()).slice(-2);
+      renderLowBanner(); renderGrid();
+    }).catch(function(e){
+      document.getElementById('content').innerHTML='<div class="loading">Could not load. Check the web app URL.<br><small>'+e.message+'</small></div>';
+    });
+  }
+
+  function setMode(m){
+    mode=m;
+    document.getElementById('mode-in').classList.toggle('active', m==='in');
+    document.getElementById('mode-out').classList.toggle('active', m==='out');
+    document.getElementById('dest-wrap').style.display = (m==='out')?'inline':'none';
+    document.getElementById('loc-wrap').style.display  = (m==='in') ?'inline':'none';
+    updateCount();
+  }
+
+  function renderLowBanner(){
+    var low = STATE.items.filter(function(i){ return i.status==='LOW'||i.status==='OUT'; });
+    var b = document.getElementById('lowbanner');
+    if(!low.length){ b.style.display='none'; return; }
+    b.style.display='block';
+    b.innerHTML = '⚠ Reorder soon: ' + low.map(function(i){
+      return i.item + (i.reorderBuyQty?(' ('+i.reorderBuyQty+' '+i.buyUnit+')'):''); }).join(', ');
+  }
+
+  function fmt(n){ return Number(n).toLocaleString(); }
+  function esc(s){ return String(s).replace(/"/g,'&quot;'); }
+
+  function renderGrid(){
+    var html='';
+    STATE.categories.forEach(function(cat){
+      var inCat = STATE.items.filter(function(i){ return i.category===cat; });
+      if(!inCat.length) return;
+      html += '<div class="cat">'+cat+'</div><div class="card">';
+      inCat.forEach(function(it){
+        var badge = (it.status==='LOW'||it.status==='OUT') ? '<span class="badge '+it.status+'">'+it.status+'</span>' : '';
+        var runway = (it.runway==null)?'':(' · '+it.runway+'d left');
+        var bal = fmt(it.balance)+' '+it.baseUnit + (it.buyUnit!==it.baseUnit?(' (≈'+it.balanceBuy+' '+it.buyUnit+')'):'') + runway;
+        var opts = it.units.map(function(u){ return '<option value="'+u+'">'+u+'</option>'; }).join('');
+        html += '<div class="item">'+
+            '<div class="info"><div class="name">'+it.item+badge+'</div><div class="bal">'+bal+'</div></div>'+
+            '<input class="qty" inputmode="decimal" data-item="'+esc(it.item)+'" oninput="onQty(this)" placeholder="0">'+
+            '<select class="unit" data-item="'+esc(it.item)+'">'+opts+'</select>'+
+          '</div>';
+      });
+      html += '</div>';
+    });
+    document.getElementById('content').innerHTML = html;
+    updateCount();
+  }
+
+  function onQty(el){
+    var on = el.value && Number(el.value)>0;
+    el.classList.toggle('on', on);
+    el.closest('.item').classList.toggle('filled', on);
+    updateCount();
+  }
+
+  function collect(){
+    var lines=[];
+    document.querySelectorAll('input.qty').forEach(function(inp){
+      var q=Number(inp.value);
+      if(q&&q>0){
+        var item=inp.getAttribute('data-item');
+        var sel=document.querySelector('select.unit[data-item="'+CSS.escape(item)+'"]');
+        lines.push({ item:item, qty:q, unit:sel.value });
+      }
+    });
+    return lines;
+  }
+
+  function updateCount(){
+    var n=collect().length;
+    document.getElementById('count').textContent = n ? (n+' item'+(n>1?'s':'')+' · '+(mode==='in'?'receiving':'sending out')) : 'Nothing entered yet';
+    document.getElementById('reviewBtn').disabled = (n===0);
+  }
+
+  function review(){
+    var lines=collect(); if(!lines.length) return;
+    var where = (mode==='in') ? ('into '+document.getElementById('location').value) : ('to '+document.getElementById('destination').value);
+    document.getElementById('modal-title').textContent = 'Log '+lines.length+' movement'+(lines.length>1?'s':'')+'?';
+    document.getElementById('modal-sub').textContent = (mode==='in'?'Receiving ':'Sending out ')+where+' · '+document.getElementById('date').value;
+    document.getElementById('modal-list').innerHTML = lines.map(function(l){
+      return '<div class="sum"><span>'+l.item+'</span><b>'+l.qty+' '+l.unit+'</b></div>'; }).join('');
+    document.getElementById('modal').classList.add('open');
+  }
+  function closeModal(){ document.getElementById('modal').classList.remove('open'); }
+
+  function submitBatch(){
+    var payload={ mode:mode, date:document.getElementById('date').value,
+      location:document.getElementById('location').value, destination:document.getElementById('destination').value, lines:collect() };
+    var btn=document.getElementById('confirmBtn'); btn.disabled=true; btn.textContent='Logging…';
+    fetch(WEBAPP_URL,{method:'POST',headers:{'Content-Type':'text/plain;charset=utf-8'},body:JSON.stringify(payload)})
+      .then(function(r){return r.json();}).then(function(res){
+        btn.disabled=false; btn.textContent='Confirm & log';
+        if(res.ok){ closeModal(); toast('✅ '+res.message,false); load(); }
+        else { toast('⚠ '+(res.error||'Failed'),true); }
+      }).catch(function(e){ btn.disabled=false; btn.textContent='Confirm & log'; toast('⚠ '+e.message,true); });
+  }
+
+  function toast(m,err){ var t=document.getElementById('toast'); t.textContent=m; t.className='show'+(err?' err':''); clearTimeout(t._t); t._t=setTimeout(function(){t.className='';},3500); }
+
+  load();
+</script>
+</body>
+</html>
